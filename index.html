@@ -17,6 +17,7 @@
 	// #F5B40C mango
 	// #C1BDBF gray
 
+	let timer = 0;
 	const blobColors = [0xF2945A, 0x2EEA81, 0x227EE5, 0x32E6E8, 0xD1242C,  0xF5B40C];
 	const white = 0xFFFFFF;
 	const gray = 0x808080;
@@ -55,7 +56,6 @@
 
 		gameState.song.setLoop(true);
 
-
 		gameState.player = this.physics.add.sprite(225, 450, 'character');
 		const platforms = this.physics.add.staticGroup();
 
@@ -65,14 +65,15 @@
 
 		gameState.cursors = this.input.keyboard.createCursorKeys();
 
-		const blobs = this.physics.add.group();
+		gameState.blobs = this.physics.add.group();
 		const circles = this.physics.add.group();
 
 
 		function blobGen () {
 			const xCoord = Math.random() * 800;
-			const xVelocity = Phaser.Math.Between(-100, 100);
-			const blob = this.physics.add.sprite(xCoord, 40, Phaser.Math.RND.pick(blobNames)).setVelocityX(xVelocity).setVelocityY(gameState.blobVelocity).setScale(gameState.blobScale);
+			const blob = this.physics.add.sprite(xCoord, 40, Phaser.Math.RND.pick(blobNames));
+			blob.setVelocityX(Phaser.Math.Between(-100, 100));
+
 			if(gameState.level < 1) {
 				blob.tint = white;
 			}
@@ -81,33 +82,37 @@
 				blob.alpha = gameState.blobAlpha;
 			}
 			
-			blobs.add(blob);
+			gameState.blobs.add(blob);
 		}
 
-		const blobGenLoop = this.time.addEvent({
-			delay: gameState.blobDelay,
-			callback: blobGen,
-			callbackScope: this,
-			loop: true,
-		});
+			// gameState.blobs.forEach(function(blob) {
+   //  		blob.tint = 0x000000;
+   //  	}, this);
 
-		function circleGen () {
-			const xCoord = Math.random() * 800;
-			circles.create(xCoord, 40, 'circle').setVelocityY(gameState.blobVelocity).setScale(gameState.circleScale).tint = gray;
-		}
+   const blobGenLoop = this.time.addEvent({
+   	delay: gameState.blobDelay,
+   	callback: blobGen,
+   	callbackScope: this,
+   	loop: true,
+   });
 
-		const circleGenLoop = this.time.addEvent({
-			delay: gameState.circleDelay,
-			callback: circleGen,
-			callbackScope: this,
-			loop: true,
-		});
+   function circleGen () {
+   	const xCoord = Math.random() * 800;
+   	circles.create(xCoord, 40, 'circle').setVelocityY(gameState.blobVelocity).setScale(gameState.circleScale).tint = gray;
+   }
 
-		this.physics.add.collider(blobs, platforms, function (blob) {
-			blob.destroy();
-		})
+   const circleGenLoop = this.time.addEvent({
+   	delay: gameState.circleDelay,
+   	callback: circleGen,
+   	callbackScope: this,
+   	loop: true,
+   });
 
-		this.physics.add.overlap(gameState.player, blobs, (player, blob) => {
+		// this.physics.add.collider(blobs, platforms, function (blob) {
+		// 	blob.destroy();
+		// })
+
+		this.physics.add.overlap(gameState.player, gameState.blobs, (player, blob) => {
 			console.log(gameState.song.volume);
 
 			blob.destroy();
@@ -171,20 +176,21 @@
 	}
 
 	function update() {
+		timer += 10;
 		if (!gameState.active) {
 			if (gameState.cursors.space.isDown) {
 				gameState.score = 0;
 				gameState.active = true;
 				gameState.song.stop();
-				gameState.startedSong: false,
-				gameState.level: 0,
-				gameState.score: 0,
-				gameState.blobAlpha: 0.3,
-				gameState.blobDelay: 1500,
-				gameState.circleDelay: 400,
-				gameState.blobVelocity: 0,
-				gameState.blobScale: 1,
-				gameState.circleScale: 1.5,
+				gameState.startedSong = false;
+				gameState.level = 0;
+				gameState.score = 0;
+				gameState.blobAlpha = 0.3;
+				gameState.blobDelay = 1500;
+				gameState.circleDelay = 400;
+				gameState.blobVelocity = 0;
+				gameState.blobScale = 1;
+				gameState.circleScale = 1.5;
 				this.scene.restart();
 			}
 		}
@@ -198,28 +204,50 @@
        else {
        	gameState.player.setVelocityX(0);
        }
-   }
 
-   const config = {
-   	type: Phaser.AUTO,
-   	width: 800,
-   	height: 600,
-   	backgroundColor: black,
-   	physics: {
-   		default: 'arcade',
-   		arcade: {
-   			gravity: { y: 300 },
-   			enableBody: true,
-   		}
-   	},
-   	scene: {
-   		preload,
-   		create,
-   		update
-   	}
-   };
+    	 var baseScale = 1;
+    	 var speed = 0.01;
+    	 var magnitude = 0.2;
+    	 const blobScale = baseScale + magnitude * Math.sin(timer * speed);
+    	 const playerScale = baseScale + 0.05 * Math.sin(timer * 0.01);
+    	 gameState.player.setScale(playerScale -.3);
+    	 gameState.player.y += 1;
+    if (gameState.active){
+    	var check = 0;
+    Phaser.Actions.Call(gameState.blobs.getChildren(), function(blob) {
+    	blob.setScale(blobScale);
+    	if (check == 0) {
+			blob.setVelocityX(-100);
+			check = 1;
+    	}
+    	else {
+    		blob.setVelocityX(100);
+    		check = 0;
+    	}
+    });
+}
+}
 
-   const game = new Phaser.Game(config);
+const config = {
+	type: Phaser.AUTO,
+	width: 800,
+	height: 600,
+	backgroundColor: black,
+	physics: {
+		default: 'arcade',
+		arcade: {
+			gravity: { y: 300 },
+			enableBody: true,
+		}
+	},
+	scene: {
+		preload,
+		create,
+		update
+	}
+};
+
+const game = new Phaser.Game(config);
 
 
 </script>
