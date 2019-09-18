@@ -46,6 +46,7 @@
 		blobDelay: 1500,
 		circleDelay: 400,
 		blobVelocity: 0,
+		blobScale: 1,
 		circleScale: 1.5,
 	};
 
@@ -71,7 +72,7 @@
 		function blobGen () {
 			const xCoord = Math.random() * 800;
 			const xVelocity = Phaser.Math.Between(-100, 100);
-			const blob = this.physics.add.sprite(xCoord, 40, Phaser.Math.RND.pick(blobNames)).setVelocityX(xVelocity).setVelocityY(gameState.blobVelocity);
+			const blob = this.physics.add.sprite(xCoord, 40, Phaser.Math.RND.pick(blobNames)).setVelocityX(xVelocity).setVelocityY(gameState.blobVelocity).setScale(gameState.blobScale);
 			if(gameState.level < 1) {
 				blob.tint = white;
 			}
@@ -106,12 +107,12 @@
 			blob.destroy();
 		})
 
-        this.physics.add.overlap(gameState.player, blobs, (player, blob) => {
-        	console.log(gameState.song.volume);
+		this.physics.add.overlap(gameState.player, blobs, (player, blob) => {
+			console.log(gameState.song.volume);
 
-        	blob.destroy();
+			blob.destroy();
 
-        	if(!gameState.startedSong) {
+			if(!gameState.startedSong) {
         		// yay!
         		gameState.song.play();
         		gameState.song.volume = 0.05;
@@ -119,6 +120,14 @@
         	}
         	else {
         		gameState.song.volume += 0.05;
+        	}
+        	if (gameState.song.volume > 1) {
+        		blobGenLoop.destroy();
+        		circleGenLoop.destroy();
+        		this.physics.pause();
+        		gameState.active = false;
+        		this.add.text(180, 250, 'You win!', { fontSize: '15px', fill: '#FFFFFF' });
+        		this.add.text(152, 270, 'Space to Restart', { fontSize: '15px', fill: '#FFFFFF' });
         	}
 
         	if(gameState.blobAlpha < 1) {
@@ -129,100 +138,56 @@
         		// this.cameras.main.backgroundColor.setTo(Phaser.Math.RND.pick(blobColors));
         	}
         	gameState.level++;
-        	gameState.circleScale -= .1;
-        	if(gameState.blobDelay > 400) {
-        		gameState.blobDelay -= 200;
+        	if(gameState.circleScale > .3) {
+        		gameState.circleScale -= .1;
         	}
-        	if (gameState.circleDelay < 2000) {
-				gameState.circleDelay += 50;
+        	if(gameState.blobScale < 2) {
+        		gameState.blobScale += .1;
         	}
+        	
+        });
 
-          //   if (getTint(blob.tintBottomLeft) == gameState.currentColor) { 
-          //    // play noise
-          //    gameState.splash.play();
+		this.physics.add.overlap(gameState.player, circles, (player, circle) => {
+			console.log(gameState.song.volume);
 
-          //     // update
-          //     blob.destroy();
-          //     gameState.score += 10;
-          //     gameState.scoreText.setText(`Score: ${gameState.score}`); 
+			circle.destroy();
+			if(gameState.blobAlpha >= 0.4) {
+				gameState.blobAlpha -= .1; 
+			}
+			if(gameState.level > 0) {
+				gameState.level--;
+			}
+			if(gameState.blobScale > 1) {
+				gameState.blobScale -= .1;
+			}
+			if(gameState.circleScale < 2) {
+				gameState.circleScale += .1;
+			}
+			if(gameState.song.volume > 0.1) {
+				gameState.song.volume -= 0.05;
+			}
+			gameState.circleDelay -= 50;
+		});
+	}
 
-          //     // next color
-          //     gameState.currentColor = Phaser.Math.RND.pick(colors);
-          //     gameState.player.tint = gameState.currentColor;
-          //   }
-          // else { // wrong
-
-          //   this.tweens.add({
-          //     targets:  gameState.rain,
-          //     volume:   0,
-          //     duration: 600,
-          //   });
-          //   blobGenLoop.destroy();
-          //   this.physics.pause();
-          //   gameState.active = false;
-          //   this.add.text(180, 250, 'Game Over', { fontSize: '15px', fill: '#000000' });
-          //   this.add.text(152, 270, 'Space to Restart', { fontSize: '15px', fill: '#000000' });
-          // }
-      });
-
-            this.physics.add.overlap(gameState.player, circles, (player, circle) => {
-            	        		console.log(gameState.song.volume);
-
-        	circle.destroy();
-        	if(gameState.blobAlpha >= 0.4) {
-        		gameState.blobAlpha -= .1; 
-        	}
-        	if(gameState.level > 0) {
-        		gameState.level--;
-        	}
-        	if(gameState.circleScale < 2) {
-        		gameState.circleScale += .1;
-        	}
-        	if(gameState.song.volume > 0.1) {
-        		gameState.song.volume -= 0.05;
-        	}
-    //     	if (gameState.blobDelay < 2000) {
-				// gameState.blobDelay += 50;
-    //     	}
-        	gameState.circleDelay -= 50;
-          //   if (getTint(blob.tintBottomLeft) == gameState.currentColor) { // right
-          //    // play noise
-          //    gameState.splash.play();
-
-          //     // update
-          //     blob.destroy();
-          //     gameState.score += 10;
-          //     gameState.scoreText.setText(`Score: ${gameState.score}`); 
-
-          //     // next color
-          //     gameState.currentColor = Phaser.Math.RND.pick(colors);
-          //     gameState.player.tint = gameState.currentColor;
-          //   }
-          // else { // wrong
-
-          //   this.tweens.add({
-          //     targets:  gameState.rain,
-          //     volume:   0,
-          //     duration: 600,
-          //   });
-          //   blobGenLoop.destroy();
-          //   this.physics.pause();
-          //   gameState.active = false;
-          //   this.add.text(180, 250, 'Game Over', { fontSize: '15px', fill: '#000000' });
-          //   this.add.text(152, 270, 'Space to Restart', { fontSize: '15px', fill: '#000000' });
-          // }
-      });
-    }
-
-    function update() {
-    	if (!gameState.active) {
-    		if (gameState.cursors.space.isDown) {
-    			gameState.score = 0;
-    			gameState.active = true;
-    			this.scene.restart();
-    		}
-    	}
-
+	function update() {
+		if (!gameState.active) {
+			if (gameState.cursors.space.isDown) {
+				gameState.score = 0;
+				gameState.active = true;
+				gameState.song.stop();
+				gameState.startedSong: false,
+				gameState.level: 0,
+				gameState.score: 0,
+				gameState.blobAlpha: 0.3,
+				gameState.blobDelay: 1500,
+				gameState.circleDelay: 400,
+				gameState.blobVelocity: 0,
+				gameState.blobScale: 1,
+				gameState.circleScale: 1.5,
+				this.scene.restart();
+			}
+		}
        // frogger or just falling again?
        // maybe have it get faster? 
        if (gameState.cursors.left.isDown) {
