@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!-- basic script -->
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser.js"></script>
+	<!-- basic script -->
+	<script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser.js"></script>
 </head>
 <body>
 
-  <script>
+	<script>
   	// COLORS
     // #000000 black
 	// #F2945A orange
@@ -17,103 +17,132 @@
 	// #F5B40C mango
 	// #C1BDBF gray
 
-    const blobColors = [0xF2945A, 0x2EEA81, 0x227EE5, 0x32E6E8, 0xD1242C,  0xF5B40C];
-    const gray = 0x808080;
-    const black = 0x000000;
-    const blobNames = ['blob1','blob2','blob3','blob4','blob5','blob6','blob7'];
+	const blobColors = [0xF2945A, 0x2EEA81, 0x227EE5, 0x32E6E8, 0xD1242C,  0xF5B40C];
+	const white = 0xFFFFFF;
+	const gray = 0x808080;
+	const black = 0x000000;
+	const blobNames = ['blob1','blob2','blob3','blob4','blob5','blob6','blob7'];
 
-    function preload() {
-      this.load.image('character', 'assets/character.png');
-      this.load.image('blob1', 'assets/blob1.png');
-      this.load.image('blob2', 'assets/blob2.png');
-      this.load.image('blob3', 'assets/blob3.png');
-      this.load.image('blob4', 'assets/blob4.png');
-      this.load.image('blob5', 'assets/blob5.png');
-      this.load.image('blob6', 'assets/blob6.png');
-      this.load.image('blob7', 'assets/blob7.png');
-      this.load.image('circle', 'assets/circle.png');
-      this.load.audio('song', 'assets/goodie_bag.mp3');
-    }
+	function preload() {
+		this.load.image('character', 'assets/character.png');
+		this.load.image('blob1', 'assets/blob1.png');
+		this.load.image('blob2', 'assets/blob2.png');
+		this.load.image('blob3', 'assets/blob3.png');
+		this.load.image('blob4', 'assets/blob4.png');
+		this.load.image('blob5', 'assets/blob5.png');
+		this.load.image('blob6', 'assets/blob6.png');
+		this.load.image('blob7', 'assets/blob7.png');
+		this.load.image('circle', 'assets/circle.png');
+		this.load.audio('song', 'assets/goodie_bag.mp3');
+	}
 
-    const gameState = {
-      active: true,
-      level: 5,
-      score: 0,
-      playerXVelocity: 200,
-      blobDelay: 800,
-      circleDelay: 500,
-      blobVelocity: 0,
-    };
+	const gameState = {
+		startedSong: false,
+		active: true,
+		level: 0,
+		score: 0,
+		blobAlpha: 0.3,
+		playerXVelocity: 250,
+		blobDelay: 1500,
+		circleDelay: 400,
+		blobVelocity: 0,
+		circleScale: 1.5,
+	};
 
-      function create() {
+	function create() {
+		gameState.song = this.sound.add('song');
 
-       gameState.song = this.sound.add('song');
-
-       gameState.song.setLoop(true);
- 
-
-       gameState.player = this.physics.add.sprite(225, 450, 'character');
-       const platforms = this.physics.add.staticGroup();
-
-       gameState.player.setCollideWorldBounds(true);
-
-       this.physics.add.collider(gameState.player, platforms);
-
-       gameState.cursors = this.input.keyboard.createCursorKeys();
-
-       const blobs = this.physics.add.group();
-       const circles = this.physics.add.group();
+		gameState.song.setLoop(true);
 
 
-       function blobGen () {
-        const blobColor = Phaser.Math.RND.pick(blobColors);
-        const xCoord = Math.random() * 800;
-        const xVelocity = Phaser.Math.Between(-40, 40);
-        const blob = this.physics.add.sprite(xCoord, 40, Phaser.Math.RND.pick(blobNames)).setVelocityX(xVelocity).setVelocityY(gameState.blobVelocity);
-        blob.tint = blobColor;
-        // blobs.create(xCoord, 40, Phaser.Math.RND.pick(blobNames)).setVelocityX(xVelocity).setVelocityY(gameState.blobVelocity).tint = blobColor;
-        blobs.add(blob);
-      }
+		gameState.player = this.physics.add.sprite(225, 450, 'character');
+		const platforms = this.physics.add.staticGroup();
 
-      const blobGenLoop = this.time.addEvent({
-        delay: gameState.blobDelay,
-        callback: blobGen,
-        callbackScope: this,
-        loop: true,
-      });
+		gameState.player.setCollideWorldBounds(true);
 
-      function circleGen () {
-        const xCoord = Math.random() * 450;
-        circles.create(xCoord, 40, 'circle').setVelocityY(gameState.blobVelocity).tint = gray;
-      }
+		this.physics.add.collider(gameState.player, platforms);
 
-      const circleGenLoop = this.time.addEvent({
-        delay: gameState.circleDelay,
-        callback: circleGen,
-        callbackScope: this,
-        loop: true,
-      });
+		gameState.cursors = this.input.keyboard.createCursorKeys();
 
-      this.physics.add.collider(blobs, platforms, function (blob) {
-        blob.destroy();
-      })
+		const blobs = this.physics.add.group();
+		const circles = this.physics.add.group();
 
-        // player unused as callback param, but workaround
+
+		function blobGen () {
+			const xCoord = Math.random() * 800;
+			const xVelocity = Phaser.Math.Between(-40, 40);
+			const blob = this.physics.add.sprite(xCoord, 40, Phaser.Math.RND.pick(blobNames)).setVelocityX(xVelocity).setVelocityY(gameState.blobVelocity);
+			if(gameState.level < 1) {
+				blob.tint = white;
+			}
+			else {
+				blob.tint = Phaser.Math.RND.pick(blobColors);
+				blob.alpha = gameState.blobAlpha;
+			}
+			
+			blobs.add(blob);
+		}
+
+		const blobGenLoop = this.time.addEvent({
+			delay: gameState.blobDelay,
+			callback: blobGen,
+			callbackScope: this,
+			loop: true,
+		});
+
+		function circleGen () {
+			const xCoord = Math.random() * 800;
+			circles.create(xCoord, 40, 'circle').setVelocityY(gameState.blobVelocity).setScale(gameState.circleScale).tint = gray;
+		}
+
+		const circleGenLoop = this.time.addEvent({
+			delay: gameState.circleDelay,
+			callback: circleGen,
+			callbackScope: this,
+			loop: true,
+		});
+
+		this.physics.add.collider(blobs, platforms, function (blob) {
+			blob.destroy();
+		})
+
         this.physics.add.overlap(gameState.player, blobs, (player, blob) => {
-        	console.log('hit blob');
-            // if (getTint(blob.tintBottomLeft) == gameState.currentColor) { // right
-            //  // play noise
-            //  gameState.splash.play();
 
-            //   // update
-            //   blob.destroy();
-            //   gameState.score += 10;
-            //   gameState.scoreText.setText(`Score: ${gameState.score}`); 
+        	if(!gameState.startedSong) {
+        		// yay!
+        		gameState.song.play();
+        		gameState.startedSong = true;
+        	}
+        	blob.destroy();
+        	if(gameState.blobAlpha < 1) {
+        		gameState.blobAlpha += .1; 
+        	}
+        	else {
+        		// gameState.player.tint = black;
+        		// this.cameras.main.backgroundColor.setTo(Phaser.Math.RND.pick(blobColors));
+        	}
+        	gameState.level++;
+        	gameState.circleScale -= .1;
+        	if(gameState.blobDelay > 400) {
+        		gameState.blobDelay -= 200;
+        	}
+        	if (gameState.circleDelay < 2000) {
+				gameState.circleDelay += 50;
+        	}
 
-            //   // next color
-            //   gameState.currentColor = Phaser.Math.RND.pick(colors);
-            //   gameState.player.tint = gameState.currentColor;
-            //}
+          //   if (getTint(blob.tintBottomLeft) == gameState.currentColor) { 
+          //    // play noise
+          //    gameState.splash.play();
+
+          //     // update
+          //     blob.destroy();
+          //     gameState.score += 10;
+          //     gameState.scoreText.setText(`Score: ${gameState.score}`); 
+
+          //     // next color
+          //     gameState.currentColor = Phaser.Math.RND.pick(colors);
+          //     gameState.player.tint = gameState.currentColor;
+          //   }
           // else { // wrong
 
           //   this.tweens.add({
@@ -127,53 +156,97 @@
           //   this.add.text(180, 250, 'Game Over', { fontSize: '15px', fill: '#000000' });
           //   this.add.text(152, 270, 'Space to Restart', { fontSize: '15px', fill: '#000000' });
           // }
-        });
-      }
+      });
 
-      function update() {
-        if (!gameState.active) {
-         if (gameState.cursors.space.isDown) {
-           gameState.score = 0;
-           gameState.active = true;
-           this.scene.restart();
-         }
-       }
+            this.physics.add.overlap(gameState.player, circles, (player, circle) => {
+
+        	circle.destroy();
+        	if(gameState.blobAlpha >= 0.4) {
+        		gameState.blobAlpha -= .1; 
+        	}
+        	if(gameState.level > 0) {
+        		gameState.level--;
+        	}
+        	if(gameState.circleScale < 2.4) {
+        		gameState.circleScale += .1;
+        	}
+    //     	if (gameState.blobDelay < 2000) {
+				// gameState.blobDelay += 50;
+    //     	}
+        	gameState.circleDelay -= 50;
+          //   if (getTint(blob.tintBottomLeft) == gameState.currentColor) { // right
+          //    // play noise
+          //    gameState.splash.play();
+
+          //     // update
+          //     blob.destroy();
+          //     gameState.score += 10;
+          //     gameState.scoreText.setText(`Score: ${gameState.score}`); 
+
+          //     // next color
+          //     gameState.currentColor = Phaser.Math.RND.pick(colors);
+          //     gameState.player.tint = gameState.currentColor;
+          //   }
+          // else { // wrong
+
+          //   this.tweens.add({
+          //     targets:  gameState.rain,
+          //     volume:   0,
+          //     duration: 600,
+          //   });
+          //   blobGenLoop.destroy();
+          //   this.physics.pause();
+          //   gameState.active = false;
+          //   this.add.text(180, 250, 'Game Over', { fontSize: '15px', fill: '#000000' });
+          //   this.add.text(152, 270, 'Space to Restart', { fontSize: '15px', fill: '#000000' });
+          // }
+      });
+    }
+
+    function update() {
+    	if (!gameState.active) {
+    		if (gameState.cursors.space.isDown) {
+    			gameState.score = 0;
+    			gameState.active = true;
+    			this.scene.restart();
+    		}
+    	}
 
        // frogger or just falling again?
        // maybe have it get faster? 
        if (gameState.cursors.left.isDown) {
-        gameState.player.setVelocityX(gameState.playerXVelocity * -1);
-      } else if (gameState.cursors.right.isDown) {
-        gameState.player.setVelocityX(gameState.playerXVelocity);
-      } 
-      else {
-        gameState.player.setVelocityX(0);
-      }
-    }
+       	gameState.player.setVelocityX(gameState.playerXVelocity * -1);
+       } else if (gameState.cursors.right.isDown) {
+       	gameState.player.setVelocityX(gameState.playerXVelocity);
+       } 
+       else {
+       	gameState.player.setVelocityX(0);
+       }
+   }
 
-    const config = {
-      type: Phaser.AUTO,
-      width: 800,
-      height: 600,
-      backgroundColor: black,
-      physics: {
-        default: 'arcade',
-        arcade: {
-          gravity: { y: 300 },
-          enableBody: true,
-        }
-      },
-      scene: {
-        preload,
-        create,
-        update
-      }
-    };
+   const config = {
+   	type: Phaser.AUTO,
+   	width: 800,
+   	height: 600,
+   	backgroundColor: black,
+   	physics: {
+   		default: 'arcade',
+   		arcade: {
+   			gravity: { y: 300 },
+   			enableBody: true,
+   		}
+   	},
+   	scene: {
+   		preload,
+   		create,
+   		update
+   	}
+   };
 
-    const game = new Phaser.Game(config);
+   const game = new Phaser.Game(config);
 
 
-  </script>
+</script>
 
 </body>
 </html>
