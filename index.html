@@ -70,7 +70,7 @@
 
 		function blobGen () {
 			const xCoord = Math.random() * 800;
-			const xVelocity = Phaser.Math.Between(-40, 40);
+			const xVelocity = Phaser.Math.Between(-100, 100);
 			const blob = this.physics.add.sprite(xCoord, 40, Phaser.Math.RND.pick(blobNames)).setVelocityX(xVelocity).setVelocityY(gameState.blobVelocity);
 			if(gameState.level < 1) {
 				blob.tint = white;
@@ -107,13 +107,20 @@
 		})
 
         this.physics.add.overlap(gameState.player, blobs, (player, blob) => {
+        	console.log(gameState.song.volume);
+
+        	blob.destroy();
 
         	if(!gameState.startedSong) {
         		// yay!
         		gameState.song.play();
+        		gameState.song.volume = 0.05;
         		gameState.startedSong = true;
         	}
-        	blob.destroy();
+        	else {
+        		gameState.song.volume += 0.05;
+        	}
+
         	if(gameState.blobAlpha < 1) {
         		gameState.blobAlpha += .1; 
         	}
@@ -159,6 +166,7 @@
       });
 
             this.physics.add.overlap(gameState.player, circles, (player, circle) => {
+            	        		console.log(gameState.song.volume);
 
         	circle.destroy();
         	if(gameState.blobAlpha >= 0.4) {
@@ -167,8 +175,11 @@
         	if(gameState.level > 0) {
         		gameState.level--;
         	}
-        	if(gameState.circleScale < 2.4) {
+        	if(gameState.circleScale < 2) {
         		gameState.circleScale += .1;
+        	}
+        	if(gameState.song.volume > 0.1) {
+        		gameState.song.volume -= 0.05;
         	}
     //     	if (gameState.blobDelay < 2000) {
 				// gameState.blobDelay += 50;
